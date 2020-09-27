@@ -1,0 +1,81 @@
+     1                                  ; Will Baglivio
+     2                                  ; CSC 322 Fall 2020 (9/26/20)
+     3                                  ; Program 3 - Summinging Integers
+     4                                  ; This program sums the elements of multiple arrays
+     5                                  
+     6                                  SECTION .data
+     7 00000000 FF02FD04FB06            bArray:		DB	-1,2,-3,4,-5,6
+     8 00000006 09000A000B000C000D-     wArray:		DW	09h,0ah,0bh,0ch,0dh
+     9 0000000F 00                 
+    10 00000010 F6FFFFFFECFFFFFFE2-     dArray:		DD	-10,-20,-30,-40,-50
+    11 00000019 FFFFFFD8FFFFFFCEFF-
+    12 00000022 FFFF               
+    13 00000024 00                      bArraySum:	DB	0
+    14 00000025 0000                    wArraySum:	DW	0
+    15 00000027 00000000                dArraySum:	DD	0
+    16 0000002B 00000000                grandTotal:	DD	0
+    17                                  
+    18                                  SECTION .bss
+    19                                  
+    20                                  SECTION .text
+    21                                  global _main
+    22                                  _main:
+    23                                  
+    24                                  ; Array 1
+    25 00000000 BB[00000000]            mov ebx,bArray
+    26 00000005 8A03                    mov al,[ebx]
+    27 00000007 83C301                  add ebx,1
+    28 0000000A 0203                    add al,[ebx]
+    29 0000000C 83C301                  add ebx,1
+    30 0000000F 0203                    add al,[ebx]
+    31 00000011 83C301                  add ebx,1
+    32 00000014 0203                    add al,[ebx]
+    33 00000016 83C301                  add ebx,1
+    34 00000019 0203                    add al,[ebx]
+    35 0000001B 83C301                  add ebx,1
+    36 0000001E 0203                    add al,[ebx]
+    37 00000020 A2[24000000]            mov [bArraySum],al
+    38                                  
+    39                                  ; Array 2
+    40 00000025 6631C0                  xor ax,ax
+    41 00000028 BB[06000000]            mov ebx,wArray
+    42 0000002D 668B03                  mov ax,[ebx]
+    43 00000030 83C302                  add ebx,2
+    44 00000033 660303                  add ax,[ebx]
+    45 00000036 83C302                  add ebx,2
+    46 00000039 660303                  add ax,[ebx]
+    47 0000003C 83C302                  add ebx,2
+    48 0000003F 660303                  add ax,[ebx]
+    49 00000042 83C302                  add ebx,2
+    50 00000045 660303                  add ax,[ebx]
+    51 00000048 66A3[25000000]          mov [wArraySum],ax
+    52                                  
+    53                                  break1:
+    54                                  
+    55                                  ; Array 3
+    56 0000004E 6631C0                  xor ax,ax
+    57 00000051 BB[10000000]            mov ebx,dArray
+    58 00000056 8B03                    mov eax,[ebx]
+    59 00000058 83C304                  add ebx,4
+    60 0000005B 0303                    add eax,[ebx]
+    61 0000005D 83C304                  add ebx,4
+    62 00000060 0303                    add eax,[ebx]
+    63 00000062 83C304                  add ebx,4
+    64 00000065 0303                    add eax,[ebx]
+    65 00000067 83C304                  add ebx,4
+    66 0000006A 0303                    add eax,[ebx]
+    67 0000006C A3[27000000]            mov [dArraySum],eax
+    68                                  
+    69                                  ; Grand Total
+    70 00000071 31C0                    xor eax,eax
+    71 00000073 A1[24000000]            mov eax,[bArraySum]
+    72 00000078 0305[25000000]          add eax,[wArraySum]
+    73 0000007E 0305[27000000]          add eax,[dArraySum]
+    74 00000084 A3[2B000000]            mov [grandTotal],eax
+    75                                  
+    76                                  lastbreak:
+    77                                  
+    78                                  ; Normal termination code
+    79 00000089 B801000000              mov eax, 1
+    80 0000008E BB00000000              mov ebx, 0
+    81 00000093 CD80                    int 80h
