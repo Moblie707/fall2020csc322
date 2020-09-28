@@ -33,6 +33,8 @@ add ebx,1
 add al,[ebx]
 mov [bArraySum],al
 
+break0:
+
 ; Array 2
 xor ax,ax
 mov ebx,wArray
