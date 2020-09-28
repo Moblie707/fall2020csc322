@@ -67,9 +67,10 @@ mov [dArraySum],eax
 
 ; Grand Total
 xor eax,eax
-mov eax,[bArraySum]
-add eax,[wArraySum]
-add eax,[dArraySum]
+movsx eax,byte[bArraySum]
+movsx ebx,word[wArraySum]
+add eax,dword[dArraySum]
+add eax,ebx
 mov [grandTotal],eax
 
 lastbreak:
