@@ -73,7 +73,7 @@ add eax,dword[dArraySum]
 add eax,ebx
 mov [grandTotal],eax
 
-lastbreak:
+lastBreak:
 
 ; Normal termination code
 mov eax, 1
