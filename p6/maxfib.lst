@@ -1,0 +1,40 @@
+     1                                  ; Will Baglivio
+     2                                  ; 10/15/20
+     3                                  ; CSC 322
+     4                                  ; Program 6 - Max DWORD Fib
+     5                                  ; This program calculates the maximum unsigned
+     6                                  ; fibonacci number that can fit into a double word.
+     7                                  
+     8                                  SECTION .data
+     9                                  
+    10                                  SECTION .bss
+    11 00000000 <res 00000004>          MaxFib: RESD 1
+    12                                  
+    13                                  SECTION .text
+    14                                  global _main
+    15                                  _main:
+    16                                  
+    17 00000000 B800000000              mov eax, 0	; fib 1
+    18 00000005 BB01000000              mov ebx, 1	; fib 2
+    19                                  
+    20                                  while:
+    21 0000000A 89C1                    	mov ecx, eax
+    22 0000000C 01D9                    	add ecx, ebx	; exc has fib n+1
+    23                                  
+    24 0000000E 7006                    	jo done		; max fib found if sign
+    25                                  
+    26 00000010 89D8                    	mov eax, ebx	; move to n+1 and n+2
+    27 00000012 89CB                    	mov ebx, ecx
+    28                                  
+    29 00000014 EBF4                    	jmp while
+    30                                  
+    31                                  done:
+    32                                  
+    33 00000016 891D[00000000]          mov [MaxFib], ebx
+    34                                  
+    35                                  lastBreak:
+    36                                  
+    37                                  ; Normal termination code
+    38 0000001C B801000000              mov eax, 1
+    39 00000021 BB00000000              mov ebx, 0
+    40 00000026 CD80                    int 80h
