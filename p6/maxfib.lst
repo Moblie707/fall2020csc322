@@ -21,7 +21,7 @@
     21 0000000A 89C1                    	mov ecx, eax
     22 0000000C 01D9                    	add ecx, ebx	; exc has fib n+1
     23                                  
-    24 0000000E 7006                    	jo done		; max fib found if sign
+    24 0000000E 7206                    	jc done		; max fib found if sign
     25                                  
     26 00000010 89D8                    	mov eax, ebx	; move to n+1 and n+2
     27 00000012 89CB                    	mov ebx, ecx

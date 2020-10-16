@@ -21,7 +21,7 @@ while:
 	mov ecx, eax
 	add ecx, ebx	; exc has fib n+1
 
-	jo done		; max fib found if sign
+	jc done		; max fib found if carry
 
 	mov eax, ebx	; move to n+1 and n+2
 	mov ebx, ecx
