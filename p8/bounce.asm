@@ -108,6 +108,8 @@ _main:
 
 		jmp infBounce
 
+lastBreak:
+
 ; Normal termination code
 	mov eax, 1
 	mov ebx, 0
