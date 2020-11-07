@@ -10,7 +10,7 @@
 ;;; Params(ax has integer to convert, ebx has address of empty string)
 %macro callItoa 2
 	pusha
-	mov ax, %1
+	mov al, %1
 	mov ebx, %2
 %%ybreak:
 	call _itoa
@@ -51,14 +51,11 @@ header1:	db	'Original Array', 10		;;; Beginning header
 h1len:		EQU	($-header1)			;;; Length of beginning header
 header2:	db	'Sorted Array', 10		;;; Ending header
 h2len:		EQU	($-header2)			;;; Length of ending header
-myi:	db 0
-myj:	db 0
+i:	db 0
+j:	db 0
 
 SECTION .bss
 string:	RESB	3	;;; String for printing
-max:	RESB	1	;;; Maximum number in an array
-;;i:	RESB	1	;;; i
-;;j:	RESB	1	;;; j
 
 SECTION .text
 global _main, _clrscr, _itoa, _prtarr, _sortarr
@@ -68,14 +65,15 @@ break8:
 	print header1, h1len
 break9:
 	mov eax, nums
-	mov ebx, numslen
+	mov bl, numslen
 break7:
 	call _prtarr
 break0:
 	call _sortarr
+breakk:
 	print header2, h2len
 	mov eax, nums
-	mov ebx, numslen
+	mov bl, numslen
 	call _prtarr
 
 	; Normal termination code
@@ -97,7 +95,7 @@ _clrscr:
 	ret
 
 ;;; Converts integer into string
-;;; ax has number (0 <= x < 1000)
+;;; al has number (0 <= x < 1000)
 ;;; ebx has address of string for storage
 _itoa:
 	pusha
@@ -111,6 +109,7 @@ obreak:
 	mov [ebx], al
 nubreak:
 	shr ax, 8
+mubreak:	
 	mov cl, 10
 	div cl
 	add al, '0'
@@ -121,11 +120,11 @@ nubreak:
 	ret
 
 ;;; Prints an array of numbers
-;;; eax has address of array of uunsigned byte integers
-;;; ebx has length of array
+;;; eax has address of array of unsigned byte integers
+;;; bl has length of array
 _prtarr:
 	pusha
-	mov ecx, ebx
+	movzx ecx, bl
 	array:
 breaky:
 		numprint [eax]
@@ -139,48 +138,51 @@ breaku:
 ;;; Sorts an array of unsigned byte integers in ascending order
 ;;; (Bubble sort)
 ;;; eax has address of array of unsigned byte integers
-;;; ebx has length of array
+;;; bl has length of array
 _sortarr:
 	pusha
-	dec ebx		;;; Set n = n-1
-	mov BYTE [myi], 0	;;; i = 0
+	dec bl		;;; Set n = n-1
+	mov BYTE [i], 0	;;; i = 0
 
 	outer:
 break1:
-		cmp [myi], ebx	;;; i < n-1
+		cmp [i], bl	;;; i < n-1
 		jge endouter	;;; end loop if i >= n-1
 
-		mov BYTE [myj], 0	;;; j = 0
+		mov BYTE [j], 0	;;; j = 0
 		push ebx	
-		sub ebx, [myi]	;;; n-1-i
+		sub bl, [i]	;;; n-1-i
 		inner:
 break2:
 			push eax
-			cmp [myj], ebx	;;; j < n-1-i
+			cmp [j], bl	;;; j < n-1-i
 			jge endinner	;;; end loop if j >= n-1-i
 breaka:
-			add eax, [myj]	;;; array position j
+			xor esi, esi
+			movzx esi, BYTE [j]
+			add eax, esi	;;; array position j
 			mov ecx, eax	
 			inc ecx		;;; array position j+1
 breakb:			
-			mov edx, [ecx] 
-			cmp [eax], edx	;;; if arr[j] > arr[j+1]
+			xor dx, dx
+			mov dl, [ecx]
+			cmp [eax], dl	;;; if arr[j] > arr[j+1]
 			jle endif
 breakx:
-				mov ebp, [eax]
-				mov [ecx], ebp
-				mov [eax], edx
+				mov dh, [eax]
+				mov [ecx], dh
+				mov [eax], dl
 			endif:
 breakc:			
 			pop eax
 breakd:
-			add BYTE [myj], 1	;;; j++
+			inc BYTE [j]	;;; j++
 breake:
 			jmp inner	;;; loop
 		endinner:
 		pop ebx
 break3:
-		inc BYTE [myi]	;;; i++
+		inc BYTE [i]	;;; i++
 break4:
 		jmp outer	;;; loop
 	endouter:
