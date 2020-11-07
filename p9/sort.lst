@@ -1,0 +1,267 @@
+     1                                  ; Will Baglivio
+     2                                  ; 11/6/20
+     3                                  ; CSC 322
+     4                                  ; Sort
+     5                                  ; This program sorts in ascending order
+     6                                  ; a list of unsigned byte integers and
+     7                                  ; prints the results to the screen
+     8                                  
+     9                                  ;;; Calls itoa function
+    10                                  ;;; Params(ax has integer to convert, ebx has address of empty string)
+    11                                  %macro callItoa 2
+    12                                  	pusha
+    13                                  	mov ax, %1
+    14                                  	mov ebx, %2
+    15                                  %%ybreak:
+    16                                  	call _itoa
+    17                                  %%zbreak:
+    18                                  	popa
+    19                                  %endmacro
+    20                                  
+    21                                  ;;; Prints given string
+    22                                  ;;; Params(address of string, and string length)
+    23                                  %macro print 2
+    24                                  	pusha
+    25                                  	mov eax, 4
+    26                                  	mov ebx, 1
+    27                                  	mov ecx, %1
+    28                                  	mov edx, %2
+    29                                  	int 80h
+    30                                  	popa
+    31                                  %endmacro
+    32                                  
+    33                                  ;;; Converts number, and prints it
+    34                                  ;;; Params(number to print)
+    35                                  %macro numprint 1
+    36                                  %%mynubreak:
+    37                                  	callItoa %1, string
+    38                                  %%mybreak:
+    39                                  	print string, 3
+    40                                  	print space, 1
+    41                                  %endmacro
+    42                                  
+    43                                  
+    44                                  SECTION .data
+    45 00000000 1B5B324A                cls:		db	1bh, '[2J'			;;; Clear screen control characters
+    46 00000004 20                      space:		db	' '				;;; Space
+    47 00000005 0A                      crlf:		db	10				;;; Return character
+    48 00000006 64C8050A005816          nums:		db	100, 200, 5, 10, 0, 88, 22	;;; Array of unsorted numbers
+    49                                  numslen:	EQU	($-nums)			;;; Length of Array
+    50 0000000D 4F726967696E616C20-     header1:	db	'Original Array', 10		;;; Beginning header
+    51 00000016 41727261790A       
+    52                                  h1len:		EQU	($-header1)			;;; Length of beginning header
+    53 0000001C 536F72746564204172-     header2:	db	'Sorted Array', 10		;;; Ending header
+    54 00000025 7261790A           
+    55                                  h2len:		EQU	($-header2)			;;; Length of ending header
+    56 00000029 00                      myi:	db 0
+    57 0000002A 00                      myj:	db 0
+    58                                  
+    59                                  SECTION .bss
+    60 00000000 <res 00000003>          string:	RESB	3	;;; String for printing
+    61 00000003 <res 00000001>          max:	RESB	1	;;; Maximum number in an array
+    62                                  ;;i:	RESB	1	;;; i
+    63                                  ;;j:	RESB	1	;;; j
+    64                                  
+    65                                  SECTION .text
+    66                                  global _main, _clrscr, _itoa, _prtarr, _sortarr
+    67                                  _main:
+    68                                  break8:
+    69 00000000 E85F000000              	call _clrscr
+    70                                  	print header1, h1len
+    71 00000005 60                  <1>  pusha
+    72 00000006 B804000000          <1>  mov eax, 4
+    73 0000000B BB01000000          <1>  mov ebx, 1
+    74 00000010 B9[0D000000]        <1>  mov ecx, %1
+    75 00000015 BA0F000000          <1>  mov edx, %2
+    76 0000001A CD80                <1>  int 80h
+    77 0000001C 61                  <1>  popa
+    78                                  break9:
+    79 0000001D B8[06000000]            	mov eax, nums
+    80 00000022 BB07000000              	mov ebx, numslen
+    81                                  break7:
+    82 00000027 E871000000              	call _prtarr
+    83                                  break0:
+    84 0000002C E8CB000000              	call _sortarr
+    85                                  	print header2, h2len
+    86 00000031 60                  <1>  pusha
+    87 00000032 B804000000          <1>  mov eax, 4
+    88 00000037 BB01000000          <1>  mov ebx, 1
+    89 0000003C B9[1C000000]        <1>  mov ecx, %1
+    90 00000041 BA0D000000          <1>  mov edx, %2
+    91 00000046 CD80                <1>  int 80h
+    92 00000048 61                  <1>  popa
+    93 00000049 B8[06000000]            	mov eax, nums
+    94 0000004E BB07000000              	mov ebx, numslen
+    95 00000053 E845000000              	call _prtarr
+    96                                  
+    97                                  	; Normal termination code
+    98 00000058 B801000000              	mov eax, 1
+    99 0000005D BB00000000              	mov ebx, 0
+   100 00000062 CD80                    	int 80h
+   101                                  
+   102                                  ;;; Clears screen
+   103                                  _clrscr:
+   104 00000064 60                      	pusha
+   105                                  
+   106 00000065 B804000000              	mov eax, 4
+   107 0000006A BB01000000              	mov ebx, 1
+   108 0000006F B9[00000000]            	mov ecx, cls
+   109 00000074 BA04000000              	mov edx, 4
+   110 00000079 CD80                    	int 80h
+   111                                  
+   112 0000007B 61                      	popa
+   113 0000007C C3                      	ret
+   114                                  
+   115                                  ;;; Converts integer into string
+   116                                  ;;; ax has number (0 <= x < 1000)
+   117                                  ;;; ebx has address of string for storage
+   118                                  _itoa:
+   119 0000007D 60                      	pusha
+   120 0000007E 30E4                    	xor ah, ah
+   121 00000080 B164                    	mov cl, 100
+   122                                  subreak:
+   123 00000082 F6F1                    	div cl
+   124                                  pbreak:
+   125 00000084 0430                    	add al, '0'
+   126                                  obreak:
+   127 00000086 8803                    	mov [ebx], al
+   128                                  nubreak:
+   129 00000088 66C1E808                	shr ax, 8
+   130 0000008C B10A                    	mov cl, 10
+   131 0000008E F6F1                    	div cl
+   132 00000090 0430                    	add al, '0'
+   133 00000092 80C430                  	add ah, '0'
+   134 00000095 884301                  	mov [ebx+1], al
+   135 00000098 886302                  	mov [ebx+2], ah
+   136 0000009B 61                      	popa
+   137 0000009C C3                      	ret
+   138                                  
+   139                                  ;;; Prints an array of numbers
+   140                                  ;;; eax has address of array of uunsigned byte integers
+   141                                  ;;; ebx has length of array
+   142                                  _prtarr:
+   143 0000009D 60                      	pusha
+   144 0000009E 89D9                    	mov ecx, ebx
+   145                                  	array:
+   146                                  breaky:
+   147                                  		numprint [eax]
+   148                              <1> %%mynubreak:
+   149                              <1>  callItoa %1, string
+   150 000000A0 60                  <2>  pusha
+   151 000000A1 668B00              <2>  mov ax, %1
+   152 000000A4 BB[00000000]        <2>  mov ebx, %2
+   153                              <2> %%ybreak:
+   154 000000A9 E8CFFFFFFF          <2>  call _itoa
+   155                              <2> %%zbreak:
+   156 000000AE 61                  <2>  popa
+   157                              <1> %%mybreak:
+   158                              <1>  print string, 3
+   159 000000AF 60                  <2>  pusha
+   160 000000B0 B804000000          <2>  mov eax, 4
+   161 000000B5 BB01000000          <2>  mov ebx, 1
+   162 000000BA B9[00000000]        <2>  mov ecx, %1
+   163 000000BF BA03000000          <2>  mov edx, %2
+   164 000000C4 CD80                <2>  int 80h
+   165 000000C6 61                  <2>  popa
+   166                              <1>  print space, 1
+   167 000000C7 60                  <2>  pusha
+   168 000000C8 B804000000          <2>  mov eax, 4
+   169 000000CD BB01000000          <2>  mov ebx, 1
+   170 000000D2 B9[04000000]        <2>  mov ecx, %1
+   171 000000D7 BA01000000          <2>  mov edx, %2
+   172 000000DC CD80                <2>  int 80h
+   173 000000DE 61                  <2>  popa
+   174 000000DF 40                      		inc eax
+   175                                  breaku:
+   176 000000E0 E2BE                    		loop array
+   177                                  	print crlf, 1
+   178 000000E2 60                  <1>  pusha
+   179 000000E3 B804000000          <1>  mov eax, 4
+   180 000000E8 BB01000000          <1>  mov ebx, 1
+   181 000000ED B9[05000000]        <1>  mov ecx, %1
+   182 000000F2 BA01000000          <1>  mov edx, %2
+   183 000000F7 CD80                <1>  int 80h
+   184 000000F9 61                  <1>  popa
+   185 000000FA 61                      	popa
+   186 000000FB C3                      	ret
+   187                                  
+   188                                  ;;; Sorts an array of unsigned byte integers in ascending order
+   189                                  ;;; (Bubble sort)
+   190                                  ;;; eax has address of array of unsigned byte integers
+   191                                  ;;; ebx has length of array
+   192                                  _sortarr:
+   193 000000FC 60                      	pusha
+   194 000000FD 4B                      	dec ebx		;;; Set n = n-1
+   195 000000FE C605[29000000]00        	mov BYTE [myi], 0	;;; i = 0
+   196                                  
+   197                                  	outer:
+   198                                  break1:
+   199 00000105 391D[29000000]          		cmp [myi], ebx	;;; i < n-1
+   200 0000010B 7D3F                    		jge endouter	;;; end loop if i >= n-1
+   201                                  
+   202 0000010D C605[2A000000]00        		mov BYTE [myj], 0	;;; j = 0
+   203 00000114 53                      		push ebx	
+   204 00000115 2B1D[29000000]          		sub ebx, [myi]	;;; n-1-i
+   205                                  		inner:
+   206                                  break2:
+   207 0000011B 50                      			push eax
+   208 0000011C 391D[2A000000]          			cmp [myj], ebx	;;; j < n-1-i
+   209 00000122 7D1F                    			jge endinner	;;; end loop if j >= n-1-i
+   210                                  breaka:
+   211 00000124 0305[2A000000]          			add eax, [myj]	;;; array position j
+   212 0000012A 89C1                    			mov ecx, eax	
+   213 0000012C 41                      			inc ecx		;;; array position j+1
+   214                                  breakb:			
+   215 0000012D 8B11                    			mov edx, [ecx] 
+   216 0000012F 3910                    			cmp [eax], edx	;;; if arr[j] > arr[j+1]
+   217 00000131 7E06                    			jle endif
+   218                                  breakx:
+   219 00000133 8B28                    				mov ebp, [eax]
+   220 00000135 8929                    				mov [ecx], ebp
+   221 00000137 8910                    				mov [eax], edx
+   222                                  			endif:
+   223                                  breakc:			
+   224 00000139 58                      			pop eax
+   225                                  breakd:
+   226 0000013A 8005[2A000000]01        			add BYTE [myj], 1	;;; j++
+   227                                  breake:
+   228 00000141 EBD8                    			jmp inner	;;; loop
+   229                                  		endinner:
+   230 00000143 5B                      		pop ebx
+   231                                  break3:
+   232 00000144 FE05[29000000]          		inc BYTE [myi]	;;; i++
+   233                                  break4:
+   234 0000014A EBB9                    		jmp outer	;;; loop
+   235                                  	endouter:
+   236                                  		
+   237 0000014C 61                      	popa
+   238 0000014D C3                      	ret
+   239                                  
+   240                                  
+   241                                  
+   242                                  
+   243                                  
+   244                                  
+   245                                  
+   246                                  
+   247                                  
+   248                                  
+   249                                  
+   250                                  
+   251                                  
+   252                                  
+   253                                  
+   254                                  
+   255                                  
+   256                                  
+   257                                  
+   258                                  
+   259                                  
+   260                                  
+   261                                  
+   262                                  
+   263                                  
+   264                                  
+   265                                  
+   266                                  
+   267                                  
