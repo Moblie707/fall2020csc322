@@ -76,6 +76,8 @@ breakk:
 	mov bl, numslen
 	call _prtarr
 
+lastBreak:
+
 	; Normal termination code
 	mov eax, 1
 	mov ebx, 0
