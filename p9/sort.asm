@@ -147,16 +147,16 @@ _sortarr:
 	outer:
 break1:
 		cmp [i], bl	;;; i < n-1
-		jge endouter	;;; end loop if i >= n-1
+		jae endouter	;;; end loop if i >= n-1
 
 		mov BYTE [j], 0	;;; j = 0
 		push ebx	
 		sub bl, [i]	;;; n-1-i
 		inner:
 break2:
-			push eax
 			cmp [j], bl	;;; j < n-1-i
-			jge endinner	;;; end loop if j >= n-1-i
+			jae endinner	;;; end loop if j >= n-1-i
+			push eax
 breaka:
 			xor esi, esi
 			movzx esi, BYTE [j]
@@ -167,7 +167,7 @@ breakb:
 			xor dx, dx
 			mov dl, [ecx]
 			cmp [eax], dl	;;; if arr[j] > arr[j+1]
-			jle endif
+			jbe endif
 breakx:
 				mov dh, [eax]
 				mov [ecx], dh
