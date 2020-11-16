@@ -1,0 +1,349 @@
+     1                                  ; Will Baglivio
+     2                                  ; 11/13/20
+     3                                  ; CSC 323
+     4                                  ; The Message Wanderer:
+     5                                  ; This program lets a message wander like a snake in a confined screen.
+     6                                  ; This code has been adapted from Dr. Allen's cycle.asm
+     7                                  
+     8                                  ;;; Define Structure for character on screen
+     9                                  STRUC mStruct
+    10 00000000 <res 00000002>          		RESB 2  ;;; space for <esc>[
+    11 00000002 <res 00000002>          	.row:	RESB 2  ;;; two digit number (characters)
+    12 00000004 <res 00000001>          		RESB 1  ;;; space for ;
+    13 00000005 <res 00000002>          	.col:	RESB 2  ;;; two digit number (characters)
+    14 00000007 <res 00000001>          		RESB 1  ;;; space for the H
+    15 00000008 <res 00000001>          	.char:	RESB 1  ;;; space for THE character
+    16                                  	.size:
+    17                                  ENDSTRUC
+    18                                  
+    19                                  ;;; Calls itoa function
+    20                                  ;;; Params(al has integer to convert, ebx has address of empty string)
+    21                                  %macro callItoa 2
+    22                                          pusha
+    23                                          mov al, %1
+    24                                          mov ebx, %2
+    25                                  %%ybreak:
+    26                                          call _itoa
+    27                                  %%zbreak:
+    28                                          popa
+    29                                  %endmacro
+    30                                  
+    31                                  ;;; Prints a character
+    32                                  ;;; Params (address of char)
+    33                                  %macro printchar 1
+    34                                  	pusha
+    35                                  	mov eax, 4
+    36                                  	mov ebx, 1
+    37                                  	mov ecx, %1
+    38                                  	mov edx, 9	;;; A character has 9 bytes
+    39                                  	int 80h
+    40                                  	popa
+    41                                  %endmacro
+    42                                  
+    43                                  SECTION .data
+    44                                  ; clear screen string
+    45 00000000 1B5B324A                cls:		db 1bh,'[2J'
+    46                                  
+    47                                  ; Set cursor position control characters
+    48 00000004 1B5B                    pos     db      1bh, '['
+    49 00000006 3030                    row     db      '00'
+    50 00000008 3B                              db      ';'
+    51 00000009 3030                    col     db      '00'
+    52 0000000B 48                              db      'H'
+    53                                  
+    54                                  ; Create an array of structs: formatted like the print interrupt uses.
+    55 0000000C 1B5B30323B30324848      message:	db 1bh,'[02;02HH'
+    56 00000015 1B5B30323B30334865      		db 1bh,'[02;03He'
+    57 0000001E 1B5B30323B3034486C      		db 1bh,'[02;04Hl'
+    58 00000027 1B5B30323B3035486C      		db 1bh,'[02;05Hl'
+    59 00000030 1B5B30323B3036486F      		db 1bh,'[02;06Ho'
+    60 00000039 1B5B30323B30374820      		db 1bh,'[02;07H '
+    61 00000042 1B5B30323B30384857      		db 1bh,'[02;08HW'
+    62 0000004B 1B5B30323B3039486F      		db 1bh,'[02;09Ho'
+    63 00000054 1B5B30323B31304872      		db 1bh,'[02;10Hr'
+    64 0000005D 1B5B30323B3131486C      		db 1bh,'[02;11Hl'
+    65 00000066 1B5B30323B31324864      		db 1bh,'[02;12Hd'
+    66 0000006F 1B5B30323B31334873      		db 1bh,'[02;13Hs'
+    67 00000078 1B5B30323B31344821      		db 1bh,'[02;14H!'
+    68 00000081 1B5B30323B31354821      		db 1bh,'[02;15H!'
+    69                                  LEN: EQU 47
+    70                                  messagelen: EQU 15
+    71                                  
+    72                                  ;;; Boundary character
+    73 0000008A 1B5B30313B3430482A      community:	db 1bh,'[01;40H*'
+    74                                  
+    75                                  ;;; Boundary defined by community
+    76                                  MINROW: EQU 1
+    77                                  MAXROW: EQU 20
+    78                                  MINCOL: EQU 1
+    79                                  MAXCOL: EQU 40
+    80                                  
+    81                                  SECTION .bss
+    82 00000000 <res 00000002>          emptystr:	RESB 2
+    83                                  
+    84                                  SECTION .text
+    85                                  global _main, _clrscr, _itoa, _crcomm, _setCursor
+    86                                  _main:
+    87 00000000 E81A000000              	call _clrscr	;;; Clears screen
+    88 00000005 E83F000000              	call _crcomm
+    89 0000000A B419                    	mov ah, 25
+    90 0000000C B001                    	mov al, 1
+    91 0000000E E896010000              	call _setCursor
+    92                                  
+    93                                  ; Demonstrate an infinite loop calling  functions which uses an array of structs
+    94                                  
+    95                                  ;top1: 	call	_displayMessage
+    96                                  ;	call	_pause
+    97                                  ;	call	_adjustMessage
+    98                                  ;	jmp	top1
+    99                                  
+   100                                  
+   101                                  
+   102                                  ; Normal termination code
+   103 00000013 B801000000              mov eax, 1
+   104 00000018 BB00000000              mov ebx, 0
+   105 0000001D CD80                    int 80h
+   106                                  
+   107                                  ;;; Clears screen
+   108                                  _clrscr:
+   109 0000001F 60                              pusha
+   110                                  
+   111 00000020 B804000000                      mov eax, 4
+   112 00000025 BB01000000                      mov ebx, 1
+   113 0000002A B9[00000000]                    mov ecx, cls
+   114 0000002F BA04000000                      mov edx, 4
+   115 00000034 CD80                            int 80h
+   116                                  
+   117 00000036 61                              popa
+   118 00000037 C3                              ret
+   119                                  
+   120                                  ;;; Converts integer into string
+   121                                  ;;; al has number (0 <= x < 100)
+   122                                  ;;; ebx has address of string for storage
+   123                                  _itoa:
+   124 00000038 60                              pusha
+   125 00000039 30E4                    	xor 	ah,ah
+   126 0000003B B10A                            mov     cl,10
+   127 0000003D F6F1                            div     cl
+   128 0000003F 80C430                          add     ah,'0'
+   129 00000042 0430                            add     al,'0'
+   130 00000044 668903                          mov     [ebx],ax
+   131 00000047 61                              popa
+   132 00000048 C3                              ret
+   133                                  
+   134                                  ;;; Creates community
+   135                                  _crcomm:
+   136 00000049 60                      	pusha
+   137                                  	
+   138                                  	;;; First prints top boundary
+   139 0000004A B928000000              	mov ecx, MAXCOL
+   140                                  	
+   141                                  	top:
+   142 0000004F 51                      		push ecx
+   143 00000050 49                      		dec ecx
+   144                                  		printchar community				;;; Prints boundary character
+   145 00000051 60                  <1>  pusha
+   146 00000052 B804000000          <1>  mov eax, 4
+   147 00000057 BB01000000          <1>  mov ebx, 1
+   148 0000005C B9[8A000000]        <1>  mov ecx, %1
+   149 00000061 BA09000000          <1>  mov edx, 9
+   150 00000066 CD80                <1>  int 80h
+   151 00000068 61                  <1>  popa
+   152                                  		callItoa cl, emptystr				;;; Convert current col to chars
+   153 00000069 60                  <1>  pusha
+   154 0000006A 88C8                <1>  mov al, %1
+   155 0000006C BB[00000000]        <1>  mov ebx, %2
+   156                              <1> %%ybreak:
+   157 00000071 E8C2FFFFFF          <1>  call _itoa
+   158                              <1> %%zbreak:
+   159 00000076 61                  <1>  popa
+   160 00000077 668B1D[00000000]        		mov bx, [emptystr]
+   161 0000007E 881D[8F000000]          		mov BYTE [community + mStruct.col], bl		;;; Moves one column to the left
+   162 00000084 883D[90000000]          		mov BYTE [community + mStruct.col + 1], bh
+   163 0000008A 59                      		pop ecx
+   164 0000008B E2C2                    		loop top
+   165                                  
+   166                                  	;;; Next, prints left boundary
+   167 0000008D B901000000              	mov ecx, 1
+   168                                  
+   169                                  	left:
+   170 00000092 83F914                  		cmp ecx, MAXROW					;;; Iterate over rows 1 <= x <= 20
+   171 00000095 7F3C                    		jg endleft
+   172                                  
+   173                                  		callItoa cl, emptystr				;;; Convert current row to chars
+   174 00000097 60                  <1>  pusha
+   175 00000098 88C8                <1>  mov al, %1
+   176 0000009A BB[00000000]        <1>  mov ebx, %2
+   177                              <1> %%ybreak:
+   178 0000009F E894FFFFFF          <1>  call _itoa
+   179                              <1> %%zbreak:
+   180 000000A4 61                  <1>  popa
+   181 000000A5 668B1D[00000000]        		mov bx, [emptystr]
+   182 000000AC 881D[8C000000]          		mov BYTE[community + mStruct.row], bl		;;; Moves one row down
+   183 000000B2 883D[8D000000]          		mov BYTE[community + mStruct.row + 1], bh
+   184                                  		printchar community				;;; Prints boundary character
+   185 000000B8 60                  <1>  pusha
+   186 000000B9 B804000000          <1>  mov eax, 4
+   187 000000BE BB01000000          <1>  mov ebx, 1
+   188 000000C3 B9[8A000000]        <1>  mov ecx, %1
+   189 000000C8 BA09000000          <1>  mov edx, 9
+   190 000000CD CD80                <1>  int 80h
+   191 000000CF 61                  <1>  popa
+   192                                  
+   193 000000D0 41                      		inc ecx
+   194 000000D1 EBBF                    		jmp left
+   195                                  	endleft:
+   196                                  
+   197                                  	;;; Next, prints bottom boundary
+   198 000000D3 B901000000              	mov ecx, 1
+   199                                  
+   200                                  	bottom:
+   201 000000D8 83F928                  		cmp ecx, MAXCOL					;;; Iterate over cols 1 <= x <= 40
+   202 000000DB 7F3C                    		jg endbottom
+   203                                  
+   204                                  		callItoa cl, emptystr				;;; Convert current col to chars
+   205 000000DD 60                  <1>  pusha
+   206 000000DE 88C8                <1>  mov al, %1
+   207 000000E0 BB[00000000]        <1>  mov ebx, %2
+   208                              <1> %%ybreak:
+   209 000000E5 E84EFFFFFF          <1>  call _itoa
+   210                              <1> %%zbreak:
+   211 000000EA 61                  <1>  popa
+   212 000000EB 668B1D[00000000]        		mov bx, [emptystr]
+   213 000000F2 881D[8F000000]          		mov BYTE[community + mStruct.col], bl		;;; Moves one col to the right
+   214 000000F8 883D[90000000]          		mov BYTE[community + mStruct.col + 1], bh
+   215                                  		printchar community				;;; Prints boundary character
+   216 000000FE 60                  <1>  pusha
+   217 000000FF B804000000          <1>  mov eax, 4
+   218 00000104 BB01000000          <1>  mov ebx, 1
+   219 00000109 B9[8A000000]        <1>  mov ecx, %1
+   220 0000010E BA09000000          <1>  mov edx, 9
+   221 00000113 CD80                <1>  int 80h
+   222 00000115 61                  <1>  popa
+   223                                  		
+   224 00000116 41                      		inc ecx
+   225 00000117 EBBF                    		jmp bottom
+   226                                  	endbottom:
+   227                                  
+   228                                  	;;; Finally, prints right boundary
+   229 00000119 B914000000              	mov ecx, MAXROW
+   230                                  
+   231                                  	right:
+   232 0000011E 51                      		push ecx
+   233 0000011F 49                      		dec ecx
+   234                                  		printchar community				;;; Prints boundary character
+   235 00000120 60                  <1>  pusha
+   236 00000121 B804000000          <1>  mov eax, 4
+   237 00000126 BB01000000          <1>  mov ebx, 1
+   238 0000012B B9[8A000000]        <1>  mov ecx, %1
+   239 00000130 BA09000000          <1>  mov edx, 9
+   240 00000135 CD80                <1>  int 80h
+   241 00000137 61                  <1>  popa
+   242                                  		callItoa cl, emptystr				;;; Convert current row to chars
+   243 00000138 60                  <1>  pusha
+   244 00000139 88C8                <1>  mov al, %1
+   245 0000013B BB[00000000]        <1>  mov ebx, %2
+   246                              <1> %%ybreak:
+   247 00000140 E8F3FEFFFF          <1>  call _itoa
+   248                              <1> %%zbreak:
+   249 00000145 61                  <1>  popa
+   250 00000146 668B1D[00000000]        		mov bx, [emptystr]
+   251 0000014D 881D[8C000000]          		mov BYTE[community + mStruct.row], bl		;;; Moves one row up
+   252 00000153 883D[8D000000]          		mov BYTE[community + mStruct.row + 1], bh
+   253 00000159 59                      		pop ecx
+   254 0000015A E2C2                    		loop right
+   255                                  
+   256 0000015C 61                      	popa
+   257 0000015D C3                      	ret
+   258                                  
+   259                                  ;;;;;;;;;;;;  Function that rotates the characters through the array of structs 
+   260                                  _adjustMessage:	
+   261 0000015E 60                      	pusha
+   262                                  
+   263 0000015F A0[14000000]            	mov	al, BYTE [message + mStruct.char] ;; get first char to put at bottom
+   264 00000164 50                      	push	eax   ; save for bottom
+   265                                  
+   266 00000165 BB[0C000000]            	mov	ebx,message  ;; pointer into array, starting at top
+   267 0000016A B92E000000              	mov	ecx,LEN-1    ;; loop 
+   268                                  
+   269 0000016F 8A5311                  _amTop: mov	dl,[ebx + mStruct.size + mStruct.char] 	;; get char below
+   270 00000172 885308                  	mov	[ebx + mStruct.char],dl			;; put on current row
+   271                                  
+   272 00000175 83C309                  	add	ebx,mStruct.size
+   273 00000178 E2F5                    	loop	_amTop
+   274                                  
+   275 0000017A 58                      	pop	eax	;; retreive the first char
+   276 0000017B 884308                  	mov	BYTE [ebx + mStruct.char],al
+   277                                  
+   278 0000017E 61                      	popa
+   279 0000017F C3                      	ret
+   280                                  
+   281                                  
+   282                                  ;;;;;;;;;;;   Function to print the array of structs of message
+   283                                  _displayMessage:
+   284 00000180 60                      	pusha
+   285 00000181 BB[0C000000]            	mov	ebx,message
+   286 00000186 B92F000000              	mov	ecx,LEN
+   287                                  
+   288 0000018B 51                      _dmTop:	push	ecx
+   289 0000018C 53                      	push	ebx
+   290 0000018D B804000000              	mov	eax,4  ; system print
+   291 00000192 89D9                    	mov	ecx,ebx ; points to string to print
+   292 00000194 BB01000000              	mov	ebx,1   ; standard out
+   293 00000199 BA09000000              	mov	edx,9   ; num chars to print
+   294 0000019E CD80                    	int	80h
+   295                                  
+   296 000001A0 5B                      	pop	ebx
+   297 000001A1 83C309                  	add	ebx,mStruct.size
+   298 000001A4 59                      	pop	ecx
+   299 000001A5 E2E4                    	loop	_dmTop
+   300 000001A7 61                      	popa
+   301 000001A8 C3                      	ret
+   302                                  
+   303                                  ;. _setcursor expects AH = row, AL = col
+   304                                  _setCursor:
+   305 000001A9 60                              pusha
+   306                                          ;;; save original to get col later
+   307 000001AA 50                              push    eax
+   308                                          ;;;;;; process row
+   309 000001AB 66C1E808                        shr     ax,8    ;; shift row to right
+   310 000001AF B30A                            mov     bl,10
+   311 000001B1 F6F3                            div     bl      ;; puts ax/10 in al, remainder in ah
+   312 000001B3 80C430                          add     ah,'0'
+   313 000001B6 0430                            add     al,'0'
+   314 000001B8 A2[06000000]                    mov     BYTE [row],al
+   315 000001BD 8825[07000000]                  mov     BYTE [row+1],ah
+   316                                          ;;;; process col
+   317 000001C3 58                              pop     eax     ;; restore original parms
+   318 000001C4 6625FF00                        and     ax,0FFh ;; erase row, leave col
+   319 000001C8 B30A                            mov     bl,10
+   320 000001CA F6F3                            div     bl      ;; puts ax/10 in al, remainder in ah
+   321 000001CC 80C430                          add     ah,'0'
+   322 000001CF 0430                            add     al,'0'
+   323 000001D1 A2[09000000]                    mov     BYTE [col],al
+   324 000001D6 8825[0A000000]                  mov     BYTE [col+1],ah
+   325                                  
+   326                                          ;;;;; now print the set cursor codes
+   327 000001DC B804000000                      mov     eax,4
+   328 000001E1 BB01000000                      mov     ebx,1
+   329 000001E6 B9[04000000]                    mov     ecx,pos
+   330 000001EB BA08000000                      mov     edx,8
+   331 000001F0 CD80                            int     80h
+   332                                  
+   333 000001F2 61                              popa
+   334 000001F3 C3                              ret
+   335                                  
+   336                                  ;;;;;;;;;;;;;  Function to sleep 1/20 second ;;;;;;;;;;;;;;;;;;;;;
+   337                                  _pause: 
+   338 000001F4 60                      	pusha
+   339 000001F5 B8A2000000              	mov	eax,162
+   340 000001FA BB[08020000]            	mov	ebx,seconds
+   341 000001FF B900000000              	mov	ecx,0
+   342 00000204 CD80                    	int	80h
+   343 00000206 61                      	popa
+   344 00000207 C3                      	ret
+   345                                  
+   346                                  ;;;;;;;;;;;;	Tricky use of ram.... put some data here for _pause to use
+   347 00000208 0000000080F0FA02        seconds: dd	0,50000000  ;;;  seconds, nanoseconds
+   348                                  
+   349                                  
