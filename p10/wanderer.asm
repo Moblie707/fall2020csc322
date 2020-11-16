@@ -52,21 +52,21 @@ col     db      '00'
         db      'H'
 
 ; Create an array of structs: formatted like the print interrupt uses.
-message:	db 1bh,'[02;02HH'
-		db 1bh,'[02;03He'
-		db 1bh,'[02;04Hl'
-		db 1bh,'[02;05Hl'
-		db 1bh,'[02;06Ho'
-		db 1bh,'[02;07H '
-		db 1bh,'[02;08HW'
-		db 1bh,'[02;09Ho'
-		db 1bh,'[02;10Hr'
-		db 1bh,'[02;11Hl'
-		db 1bh,'[02;12Hd'
-		db 1bh,'[02;13Hs'
-		db 1bh,'[02;14H!'
-		db 1bh,'[02;15H!'
-LEN: EQU 47
+message:	db 1bh,'[10;28H!'
+		db 1bh,'[10;27H!'
+		db 1bh,'[10;26Hs'
+		db 1bh,'[10;25Hd'
+		db 1bh,'[10;24Hl'
+		db 1bh,'[10;23Hr'
+		db 1bh,'[10;22Ho'
+		db 1bh,'[10;21HW'
+		db 1bh,'[10;20H '
+		db 1bh,'[10;19Ho'
+		db 1bh,'[10;18Hl'
+		db 1bh,'[10;17Hl'
+		db 1bh,'[10;16He'
+		db 1bh,'[10;15HH'
+LEN: EQU 135
 messagelen: EQU 15
 
 ;;; Boundary character
@@ -82,10 +82,13 @@ SECTION .bss
 emptystr:	RESB 2
 
 SECTION .text
-global _main, _clrscr, _itoa, _crcomm, _setCursor
+global _main, _clrscr, _itoa, _crcomm, _displayMessage, _setCursor
 _main:
 	call _clrscr	;;; Clears screen
-	call _crcomm
+	call _crcomm	;;; Creates community
+break:
+	call _displayMessage
+
 	mov ah, 25
 	mov al, 1
 	call _setCursor
@@ -227,7 +230,7 @@ _amTop: mov	dl,[ebx + mStruct.size + mStruct.char] 	;; get char below
 _displayMessage:
 	pusha
 	mov	ebx,message
-	mov	ecx,LEN
+	mov	ecx,messagelen
 
 _dmTop:	push	ecx
 	push	ebx
