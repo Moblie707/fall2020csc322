@@ -52,7 +52,8 @@ col     db      '00'
         db      'H'
 
 ; Create an array of structs: formatted like the print interrupt uses.
-message:	db 1bh,'[10;28H!'
+message:	db 1bh,'[10;29H '
+		db 1bh,'[10;28H!'
 		db 1bh,'[10;27H!'
 		db 1bh,'[10;26Hs'
 		db 1bh,'[10;25Hd'
@@ -66,8 +67,11 @@ message:	db 1bh,'[10;28H!'
 		db 1bh,'[10;17Hl'
 		db 1bh,'[10;16He'
 		db 1bh,'[10;15HH'
-LEN: EQU 135
-messagelen: EQU 15
+LEN: EQU 144
+messagelen: EQU 16
+
+firstrow: db 10
+firstcol: db 15
 
 ;;; Boundary character
 community:	db 1bh,'[01;40H*'
@@ -80,14 +84,20 @@ MAXCOL: EQU 40
 
 SECTION .bss
 emptystr:	RESB 2
+deltarow:	RESB 1
+deltacol:	RESB 1
 
 SECTION .text
-global _main, _clrscr, _itoa, _crcomm, _displayMessage, _setCursor
+global _main, _clrscr, _itoa, _crcomm, _displayMessage, _adjustMessage, _pause, _setCursor
 _main:
 	call _clrscr	;;; Clears screen
 	call _crcomm	;;; Creates community
-break:
-	call _displayMessage
+
+	infty:
+		call _displayMessage
+		call _pause
+		call _adjustMessage
+		jmp infty
 
 	mov ah, 25
 	mov al, 1
@@ -203,24 +213,136 @@ _crcomm:
 	popa
 	ret
 
-;;;;;;;;;;;;  Function that rotates the characters through the array of structs 
+;;; Function that shifts the rows/cols of the characters through the array of structs, and randomly
+;;; chooses new position for first character (+- 1 to row and/or col)
 _adjustMessage:	
 	pusha
 
-	mov	al, BYTE [message + mStruct.char] ;; get first char to put at bottom
-	push	eax   ; save for bottom
+	mov ebx, message	;;; Pointer into array, starting at last character
+	mov ecx, messagelen	;;; Iterate over n-1 characters
+	dec ecx
+	dec ecx
 
-	mov	ebx,message  ;; pointer into array, starting at top
-	mov	ecx,LEN-1    ;; loop 
+	amTop:
+		mov ax, [ebx + mStruct.size + mStruct.row]	;;; Get row of next character
+		mov dx, [ebx + mStruct.size + mStruct.col]	;;; get col of next character
 
-_amTop: mov	dl,[ebx + mStruct.size + mStruct.char] 	;; get char below
-	mov	[ebx + mStruct.char],dl			;; put on current row
+		mov [ebx + mStruct.row], ax			;;; Move next row to current row
+		mov [ebx + mStruct.col], dx			;;; Move next col to current col
 
-	add	ebx,mStruct.size
-	loop	_amTop
+		add ebx, mStruct.size				;;; Move to next character
+		loop amTop
 
-	pop	eax	;; retreive the first char
-	mov	BYTE [ebx + mStruct.char],al
+	call _displayMessage
+mybreak:
+	rdtsc
+        and eax, 111b	;;; Choose a random number between 0 and 7, inclusive
+
+	;;; Decide where to move first character based on al register
+	cmp eax, 0		;;; Rng == 0
+	jne next1
+	mov BYTE [deltarow], -1
+	mov BYTE [deltacol], 0
+	jmp endrng
+
+	next1:
+	cmp eax, 1		;;; Rng == 1
+	jne next2
+	mov BYTE [deltarow], -1
+	mov BYTE [deltacol], 1
+	jmp endrng
+	
+	next2:
+	cmp eax, 2		;;; Rng == 2
+	jne next3
+	mov BYTE [deltarow], 0
+	mov BYTE [deltacol], 1
+	jmp endrng
+
+	next3:
+	cmp eax, 3		;;; Rng == 3
+	jne next4
+	mov BYTE [deltarow], 1
+	mov BYTE [deltacol], 1
+	jmp endrng
+
+	next4:
+	cmp eax, 4		;;; Rng == 4
+	jne next5
+	mov BYTE [deltarow], 1
+	mov BYTE [deltacol], 0
+	jmp endrng
+
+	next5:
+	cmp eax, 5		;;; Rng == 5
+	jne next6
+	mov BYTE [deltarow], 1
+	mov BYTE [deltacol], -1
+	jmp endrng
+
+	next6:
+	cmp eax, 6		;;; Rng == 6
+	jne next7
+	mov BYTE [deltarow], 0
+	mov BYTE [deltacol], -1
+	jmp endrng
+
+	next7:
+	cmp eax, 7		;;; Rng == 7
+	jne endrng
+	mov BYTE [deltarow], -1
+	mov BYTE [deltacol], -1
+
+	endrng:
+	mov BYTE [deltarow], -1
+	mov BYTE [deltacol], -1
+
+	;;; Adjust row/col by appropriate amount
+	mov al, [deltarow]
+	mov dl, [deltacol]
+	add [firstrow], al	;;; Change 1st char row by deltarow
+	add [firstcol], dl	;;; Change 1st char col by deltacol
+
+	;;; Final check to make sure no boundaries are crossed
+	mov al, [firstrow]
+	mov dl, [firstcol]
+
+	;;; Top boundary check
+	cmp al, 1
+	jg botbound
+	mov BYTE [firstrow], 19
+
+	;;; Bottom boundary check
+	botbound:
+	cmp al, MAXROW
+	jl leftbound
+	mov BYTE [firstrow], 2
+
+	;;; Left boundary check
+	leftbound:
+	cmp dl, 1
+	jg rightbound
+	mov BYTE [firstcol], 39
+
+	;;; Right boundary check
+	rightbound:
+	cmp dl, MAXCOL
+	jl endbound
+	mov BYTE [firstcol], 2
+
+	endbound:
+
+	;;; Now adjust first character row/col
+nubreak1:
+	callItoa [firstrow], emptystr
+	mov cx, [emptystr]
+	mov [ebx + mStruct.row], cl
+	mov [ebx + mStruct.row + 1], ch
+nubreak2:
+	callItoa [firstcol], emptystr
+	mov cx, [emptystr]
+	mov [ebx + mStruct.col], cl
+	mov [ebx + mStruct.col + 1], ch
 
 	popa
 	ret
@@ -291,6 +413,6 @@ _pause:
 	ret
 
 ;;;;;;;;;;;;	Tricky use of ram.... put some data here for _pause to use
-seconds: dd	0,50000000  ;;;  seconds, nanoseconds
+seconds: dd	0,500000000  ;;;  seconds, nanoseconds
 
 
