@@ -94,14 +94,14 @@
     94 00000005 E850000000              	call _crcomm	;;; Creates community
     95                                  
     96                                  	infty:
-    97 0000000A E8CB020000              		call _displayMessage
-    98 0000000F E83A030000              		call _pause
+    97 0000000A E8BD020000              		call _displayMessage
+    98 0000000F E82C030000              		call _pause
     99 00000014 E856010000              		call _adjustMessage
    100 00000019 EBEF                    		jmp infty
    101                                  
    102 0000001B B419                    	mov ah, 25
    103 0000001D B001                    	mov al, 1
-   104 0000001F E8DF020000              	call _setCursor
+   104 0000001F E8D1020000              	call _setCursor
    105                                  
    106                                  ; Demonstrate an infinite loop calling  functions which uses an array of structs
    107                                  
@@ -347,139 +347,140 @@
    347 00000237 C605[03000000]FF        	mov BYTE [deltacol], -1
    348                                  
    349                                  	endrng:
-   350 0000023E C605[02000000]FF        	mov BYTE [deltarow], -1
-   351 00000245 C605[03000000]FF        	mov BYTE [deltacol], -1
-   352                                  
-   353                                  	;;; Adjust row/col by appropriate amount
-   354 0000024C A0[02000000]            	mov al, [deltarow]
-   355 00000251 8A15[03000000]          	mov dl, [deltacol]
-   356 00000257 0005[93000000]          	add [firstrow], al	;;; Change 1st char row by deltarow
-   357 0000025D 0015[94000000]          	add [firstcol], dl	;;; Change 1st char col by deltacol
-   358                                  
-   359                                  	;;; Final check to make sure no boundaries are crossed
-   360 00000263 A0[93000000]            	mov al, [firstrow]
-   361 00000268 8A15[94000000]          	mov dl, [firstcol]
-   362                                  
-   363                                  	;;; Top boundary check
-   364 0000026E 3C01                    	cmp al, 1
-   365 00000270 7F07                    	jg botbound
-   366 00000272 C605[93000000]13        	mov BYTE [firstrow], 19
-   367                                  
-   368                                  	;;; Bottom boundary check
-   369                                  	botbound:
-   370 00000279 3C14                    	cmp al, MAXROW
-   371 0000027B 7C07                    	jl leftbound
-   372 0000027D C605[93000000]02        	mov BYTE [firstrow], 2
-   373                                  
-   374                                  	;;; Left boundary check
-   375                                  	leftbound:
-   376 00000284 80FA01                  	cmp dl, 1
-   377 00000287 7F07                    	jg rightbound
-   378 00000289 C605[94000000]27        	mov BYTE [firstcol], 39
-   379                                  
-   380                                  	;;; Right boundary check
-   381                                  	rightbound:
-   382 00000290 80FA28                  	cmp dl, MAXCOL
-   383 00000293 7C07                    	jl endbound
-   384 00000295 C605[94000000]02        	mov BYTE [firstcol], 2
-   385                                  
-   386                                  	endbound:
-   387                                  
-   388                                  	;;; Now adjust first character row/col
-   389                                  nubreak1:
-   390                                  	callItoa [firstrow], emptystr
-   391 0000029C 60                  <1>  pusha
-   392 0000029D A0[93000000]        <1>  mov al, %1
-   393 000002A2 BB[00000000]        <1>  mov ebx, %2
-   394                              <1> %%ybreak:
-   395 000002A7 E89DFDFFFF          <1>  call _itoa
-   396                              <1> %%zbreak:
-   397 000002AC 61                  <1>  popa
-   398 000002AD 668B0D[00000000]        	mov cx, [emptystr]
-   399 000002B4 884B02                  	mov [ebx + mStruct.row], cl
-   400 000002B7 886B03                  	mov [ebx + mStruct.row + 1], ch
-   401                                  nubreak2:
-   402                                  	callItoa [firstcol], emptystr
-   403 000002BA 60                  <1>  pusha
-   404 000002BB A0[94000000]        <1>  mov al, %1
-   405 000002C0 BB[00000000]        <1>  mov ebx, %2
-   406                              <1> %%ybreak:
-   407 000002C5 E87FFDFFFF          <1>  call _itoa
-   408                              <1> %%zbreak:
-   409 000002CA 61                  <1>  popa
-   410 000002CB 668B0D[00000000]        	mov cx, [emptystr]
-   411 000002D2 884B05                  	mov [ebx + mStruct.col], cl
-   412 000002D5 886B06                  	mov [ebx + mStruct.col + 1], ch
-   413                                  
-   414 000002D8 61                      	popa
-   415 000002D9 C3                      	ret
-   416                                  
+   350                                  	
+   351                                  	;;;;;mov BYTE [deltarow], -1
+   352                                  	;;;;;mov BYTE [deltacol], -1
+   353                                  
+   354                                  	;;; Adjust row/col by appropriate amount
+   355 0000023E A0[02000000]            	mov al, [deltarow]
+   356 00000243 8A15[03000000]          	mov dl, [deltacol]
+   357 00000249 0005[93000000]          	add [firstrow], al	;;; Change 1st char row by deltarow
+   358 0000024F 0015[94000000]          	add [firstcol], dl	;;; Change 1st char col by deltacol
+   359                                  
+   360                                  	;;; Final check to make sure no boundaries are crossed
+   361 00000255 A0[93000000]            	mov al, [firstrow]
+   362 0000025A 8A15[94000000]          	mov dl, [firstcol]
+   363                                  
+   364                                  	;;; Top boundary check
+   365 00000260 3C01                    	cmp al, 1
+   366 00000262 7F07                    	jg botbound
+   367 00000264 C605[93000000]13        	mov BYTE [firstrow], 19
+   368                                  
+   369                                  	;;; Bottom boundary check
+   370                                  	botbound:
+   371 0000026B 3C14                    	cmp al, MAXROW
+   372 0000026D 7C07                    	jl leftbound
+   373 0000026F C605[93000000]02        	mov BYTE [firstrow], 2
+   374                                  
+   375                                  	;;; Left boundary check
+   376                                  	leftbound:
+   377 00000276 80FA01                  	cmp dl, 1
+   378 00000279 7F07                    	jg rightbound
+   379 0000027B C605[94000000]27        	mov BYTE [firstcol], 39
+   380                                  
+   381                                  	;;; Right boundary check
+   382                                  	rightbound:
+   383 00000282 80FA28                  	cmp dl, MAXCOL
+   384 00000285 7C07                    	jl endbound
+   385 00000287 C605[94000000]02        	mov BYTE [firstcol], 2
+   386                                  
+   387                                  	endbound:
+   388                                  
+   389                                  	;;; Now adjust first character row/col
+   390                                  nubreak1:
+   391                                  	callItoa [firstrow], emptystr
+   392 0000028E 60                  <1>  pusha
+   393 0000028F A0[93000000]        <1>  mov al, %1
+   394 00000294 BB[00000000]        <1>  mov ebx, %2
+   395                              <1> %%ybreak:
+   396 00000299 E8ABFDFFFF          <1>  call _itoa
+   397                              <1> %%zbreak:
+   398 0000029E 61                  <1>  popa
+   399 0000029F 668B0D[00000000]        	mov cx, [emptystr]
+   400 000002A6 884B02                  	mov [ebx + mStruct.row], cl
+   401 000002A9 886B03                  	mov [ebx + mStruct.row + 1], ch
+   402                                  nubreak2:
+   403                                  	callItoa [firstcol], emptystr
+   404 000002AC 60                  <1>  pusha
+   405 000002AD A0[94000000]        <1>  mov al, %1
+   406 000002B2 BB[00000000]        <1>  mov ebx, %2
+   407                              <1> %%ybreak:
+   408 000002B7 E88DFDFFFF          <1>  call _itoa
+   409                              <1> %%zbreak:
+   410 000002BC 61                  <1>  popa
+   411 000002BD 668B0D[00000000]        	mov cx, [emptystr]
+   412 000002C4 884B05                  	mov [ebx + mStruct.col], cl
+   413 000002C7 886B06                  	mov [ebx + mStruct.col + 1], ch
+   414                                  
+   415 000002CA 61                      	popa
+   416 000002CB C3                      	ret
    417                                  
-   418                                  ;;;;;;;;;;;   Function to print the array of structs of message
-   419                                  _displayMessage:
-   420 000002DA 60                      	pusha
-   421 000002DB BB[0C000000]            	mov	ebx,message
-   422 000002E0 B90F000000              	mov	ecx,messagelen
-   423                                  
-   424 000002E5 51                      _dmTop:	push	ecx
-   425 000002E6 53                      	push	ebx
-   426 000002E7 B804000000              	mov	eax,4  ; system print
-   427 000002EC 89D9                    	mov	ecx,ebx ; points to string to print
-   428 000002EE BB01000000              	mov	ebx,1   ; standard out
-   429 000002F3 BA09000000              	mov	edx,9   ; num chars to print
-   430 000002F8 CD80                    	int	80h
-   431                                  
-   432 000002FA 5B                      	pop	ebx
-   433 000002FB 83C309                  	add	ebx,mStruct.size
-   434 000002FE 59                      	pop	ecx
-   435 000002FF E2E4                    	loop	_dmTop
-   436 00000301 61                      	popa
-   437 00000302 C3                      	ret
-   438                                  
-   439                                  ;. _setcursor expects AH = row, AL = col
-   440                                  _setCursor:
-   441 00000303 60                              pusha
-   442                                          ;;; save original to get col later
-   443 00000304 50                              push    eax
-   444                                          ;;;;;; process row
-   445 00000305 66C1E808                        shr     ax,8    ;; shift row to right
-   446 00000309 B30A                            mov     bl,10
-   447 0000030B F6F3                            div     bl      ;; puts ax/10 in al, remainder in ah
-   448 0000030D 80C430                          add     ah,'0'
-   449 00000310 0430                            add     al,'0'
-   450 00000312 A2[06000000]                    mov     BYTE [row],al
-   451 00000317 8825[07000000]                  mov     BYTE [row+1],ah
-   452                                          ;;;; process col
-   453 0000031D 58                              pop     eax     ;; restore original parms
-   454 0000031E 6625FF00                        and     ax,0FFh ;; erase row, leave col
-   455 00000322 B30A                            mov     bl,10
-   456 00000324 F6F3                            div     bl      ;; puts ax/10 in al, remainder in ah
-   457 00000326 80C430                          add     ah,'0'
-   458 00000329 0430                            add     al,'0'
-   459 0000032B A2[09000000]                    mov     BYTE [col],al
-   460 00000330 8825[0A000000]                  mov     BYTE [col+1],ah
-   461                                  
-   462                                          ;;;;; now print the set cursor codes
-   463 00000336 B804000000                      mov     eax,4
-   464 0000033B BB01000000                      mov     ebx,1
-   465 00000340 B9[04000000]                    mov     ecx,pos
-   466 00000345 BA08000000                      mov     edx,8
-   467 0000034A CD80                            int     80h
-   468                                  
-   469 0000034C 61                              popa
-   470 0000034D C3                              ret
-   471                                  
-   472                                  ;;;;;;;;;;;;;  Function to sleep 1/20 second ;;;;;;;;;;;;;;;;;;;;;
-   473                                  _pause: 
-   474 0000034E 60                      	pusha
-   475 0000034F B8A2000000              	mov	eax,162
-   476 00000354 BB[62030000]            	mov	ebx,seconds
-   477 00000359 B900000000              	mov	ecx,0
-   478 0000035E CD80                    	int	80h
-   479 00000360 61                      	popa
-   480 00000361 C3                      	ret
-   481                                  
-   482                                  ;;;;;;;;;;;;	Tricky use of ram.... put some data here for _pause to use
-   483 00000362 000000000065CD1D        seconds: dd	0,500000000  ;;;  seconds, nanoseconds
-   484                                  
+   418                                  
+   419                                  ;;;;;;;;;;;   Function to print the array of structs of message
+   420                                  _displayMessage:
+   421 000002CC 60                      	pusha
+   422 000002CD BB[0C000000]            	mov	ebx,message
+   423 000002D2 B90F000000              	mov	ecx,messagelen
+   424                                  
+   425 000002D7 51                      _dmTop:	push	ecx
+   426 000002D8 53                      	push	ebx
+   427 000002D9 B804000000              	mov	eax,4  ; system print
+   428 000002DE 89D9                    	mov	ecx,ebx ; points to string to print
+   429 000002E0 BB01000000              	mov	ebx,1   ; standard out
+   430 000002E5 BA09000000              	mov	edx,9   ; num chars to print
+   431 000002EA CD80                    	int	80h
+   432                                  
+   433 000002EC 5B                      	pop	ebx
+   434 000002ED 83C309                  	add	ebx,mStruct.size
+   435 000002F0 59                      	pop	ecx
+   436 000002F1 E2E4                    	loop	_dmTop
+   437 000002F3 61                      	popa
+   438 000002F4 C3                      	ret
+   439                                  
+   440                                  ;. _setcursor expects AH = row, AL = col
+   441                                  _setCursor:
+   442 000002F5 60                              pusha
+   443                                          ;;; save original to get col later
+   444 000002F6 50                              push    eax
+   445                                          ;;;;;; process row
+   446 000002F7 66C1E808                        shr     ax,8    ;; shift row to right
+   447 000002FB B30A                            mov     bl,10
+   448 000002FD F6F3                            div     bl      ;; puts ax/10 in al, remainder in ah
+   449 000002FF 80C430                          add     ah,'0'
+   450 00000302 0430                            add     al,'0'
+   451 00000304 A2[06000000]                    mov     BYTE [row],al
+   452 00000309 8825[07000000]                  mov     BYTE [row+1],ah
+   453                                          ;;;; process col
+   454 0000030F 58                              pop     eax     ;; restore original parms
+   455 00000310 6625FF00                        and     ax,0FFh ;; erase row, leave col
+   456 00000314 B30A                            mov     bl,10
+   457 00000316 F6F3                            div     bl      ;; puts ax/10 in al, remainder in ah
+   458 00000318 80C430                          add     ah,'0'
+   459 0000031B 0430                            add     al,'0'
+   460 0000031D A2[09000000]                    mov     BYTE [col],al
+   461 00000322 8825[0A000000]                  mov     BYTE [col+1],ah
+   462                                  
+   463                                          ;;;;; now print the set cursor codes
+   464 00000328 B804000000                      mov     eax,4
+   465 0000032D BB01000000                      mov     ebx,1
+   466 00000332 B9[04000000]                    mov     ecx,pos
+   467 00000337 BA08000000                      mov     edx,8
+   468 0000033C CD80                            int     80h
+   469                                  
+   470 0000033E 61                              popa
+   471 0000033F C3                              ret
+   472                                  
+   473                                  ;;;;;;;;;;;;;  Function to sleep 1/20 second ;;;;;;;;;;;;;;;;;;;;;
+   474                                  _pause: 
+   475 00000340 60                      	pusha
+   476 00000341 B8A2000000              	mov	eax,162
+   477 00000346 BB[54030000]            	mov	ebx,seconds
+   478 0000034B B900000000              	mov	ecx,0
+   479 00000350 CD80                    	int	80h
+   480 00000352 61                      	popa
+   481 00000353 C3                      	ret
+   482                                  
+   483                                  ;;;;;;;;;;;;	Tricky use of ram.... put some data here for _pause to use
+   484 00000354 0000000000A3E111        seconds: dd	0,300000000  ;;;  seconds, nanoseconds
    485                                  
+   486                                  

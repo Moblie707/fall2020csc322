@@ -94,6 +94,7 @@ _main:
 	call _crcomm	;;; Creates community
 
 	infty:
+loopBreak:
 		call _displayMessage
 		call _pause
 		call _adjustMessage
@@ -102,15 +103,6 @@ _main:
 	mov ah, 25
 	mov al, 1
 	call _setCursor
-
-; Demonstrate an infinite loop calling  functions which uses an array of structs
-
-;top1: 	call	_displayMessage
-;	call	_pause
-;	call	_adjustMessage
-;	jmp	top1
-
-
 
 ; Normal termination code
 mov eax, 1
@@ -291,8 +283,9 @@ mybreak:
 	mov BYTE [deltacol], -1
 
 	endrng:
-	mov BYTE [deltarow], -1
-	mov BYTE [deltacol], -1
+	
+	;;;;;mov BYTE [deltarow], -1
+	;;;;;mov BYTE [deltacol], -1
 
 	;;; Adjust row/col by appropriate amount
 	mov al, [deltarow]
@@ -410,6 +403,6 @@ _pause:
 	ret
 
 ;;;;;;;;;;;;	Tricky use of ram.... put some data here for _pause to use
-seconds: dd	0,500000000  ;;;  seconds, nanoseconds
+seconds: dd	0,300000000  ;;;  seconds, nanoseconds
 
 
