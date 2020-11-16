@@ -67,8 +67,8 @@ message:	db 1bh,'[10;29H '
 		db 1bh,'[10;17Hl'
 		db 1bh,'[10;16He'
 		db 1bh,'[10;15HH'
-LEN: EQU 144
-messagelen: EQU 16
+LEN: EQU 135
+messagelen: EQU 15
 
 firstrow: db 10
 firstcol: db 15
@@ -221,7 +221,6 @@ _adjustMessage:
 	mov ebx, message	;;; Pointer into array, starting at last character
 	mov ecx, messagelen	;;; Iterate over n-1 characters
 	dec ecx
-	dec ecx
 
 	amTop:
 		mov ax, [ebx + mStruct.size + mStruct.row]	;;; Get row of next character
@@ -232,8 +231,6 @@ _adjustMessage:
 
 		add ebx, mStruct.size				;;; Move to next character
 		loop amTop
-
-	call _displayMessage
 mybreak:
 	rdtsc
         and eax, 111b	;;; Choose a random number between 0 and 7, inclusive
